@@ -277,6 +277,32 @@ async function savePlayerProfile() {
   }
 }
 
+async function saveRewardedPlayerProfile() {
+  const selectedId = fields.playerSelect.value;
+  const existingPlayer = savedPlayers.find((player) => player.id === selectedId);
+  if (!selectedId || !existingPlayer) {
+    return false;
+  }
+
+  const saved = await apiRequest("/api/players", {
+    method: "POST",
+    body: JSON.stringify({
+      id: selectedId,
+      name: existingPlayer.name,
+      maxHp: state.playerMaxHp,
+      currentHp: state.playerCurrentHp,
+      attack: state.playerAttack,
+      skillIds: state.selectedSkillIds,
+    }),
+  });
+
+  savedPlayers = savedPlayers.map((player) => (player.id === saved.id ? saved : player));
+  fields.playerName.value = saved.name;
+  fields.playerSelect.value = saved.id;
+  setStorageStatus(`${saved.name}의 전투 보상과 능력치를 자동 저장했습니다.`, "ok");
+  return true;
+}
+
 function loadSelectedPlayerProfile() {
   const player = savedPlayers.find((item) => item.id === fields.playerSelect.value);
   if (!player) {
@@ -491,17 +517,34 @@ function startBattle() {
   updateStatus();
 }
 
-function endBattleWithReward() {
+async function endBattleWithReward() {
   state.phase = "reward";
   state.battleEnded = true;
+  state.playerMaxHp += state.monster.rewardHp;
+  state.playerCurrentHp = clamp(
+    state.playerCurrentHp + state.monster.rewardHp,
+    0,
+    state.playerMaxHp,
+  );
+  state.playerAttack += state.monster.rewardAtk;
   const rewards = rewardItems(state.monster);
+  let savedToServer = false;
 
   elements.resultPhase.textContent = "3. 보상";
   elements.resultTitle.textContent = `${state.monster.name} 처치`;
-  elements.resultText.textContent = "전투가 끝났습니다. 아래 보상을 획득하세요.";
   elements.rewardList.innerHTML = rewards.map((reward) => `<li>${reward}</li>`).join("");
   elements.closeDialogButton.textContent = "설정으로 돌아가기";
   updateStatus();
+
+  try {
+    savedToServer = await saveRewardedPlayerProfile();
+  } catch (error) {
+    setStorageStatus(error.message || "전투 결과 자동 저장에 실패했습니다.", "warn");
+  }
+
+  elements.resultText.textContent = savedToServer
+    ? `보상을 적용했습니다. 최대 HP ${state.playerMaxHp}, 현재 HP ${state.playerCurrentHp}, 공격력 ${state.playerAttack} 상태로 자동 저장했습니다.`
+    : `보상을 적용했습니다. 현재 능력치는 최대 HP ${state.playerMaxHp}, 현재 HP ${state.playerCurrentHp}, 공격력 ${state.playerAttack}입니다. 저장된 플레이어를 불러온 전투가 아니므로 서버에는 저장하지 않았습니다.`;
 }
 
 function endBattleWithDefeat() {
@@ -586,7 +629,7 @@ async function handlePlayerTurn() {
   if (state.enemyCurrentHp <= 0) {
     state.isAnimating = false;
     updateStatus();
-    endBattleWithReward();
+    await endBattleWithReward();
     return;
   }
 
