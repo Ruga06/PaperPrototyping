@@ -79,6 +79,10 @@ function normalizePlayer(input, existingId) {
     maxHp: Math.max(1, Number(input.maxHp) || 30),
     currentHp: Math.max(0, Number(input.currentHp) || 0),
     attack: Math.max(0, Number(input.attack) || 0),
+    speed: Math.max(0, Number(input.speed) || 0),
+    coins: Math.max(0, Number(input.coins) || 0),
+    previousJobId: Math.max(0, Number(input.previousJobId) || 0),
+    isekaiJobId: Math.max(0, Number(input.isekaiJobId) || 0),
     skillIds,
     updatedAt: new Date().toISOString(),
   };

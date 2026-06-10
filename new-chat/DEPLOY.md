@@ -35,6 +35,9 @@ Vercel에는 화면과 API를 배포하고, Supabase에는 플레이어 정보�
 3. 왼쪽 메뉴에서 SQL Editor를 엽니다.
 4. [supabase/schema.sql](supabase/schema.sql) 내용을 복사해서 실행합니다.
 
+이미 배포한 적이 있어도 업데이트 후 이 SQL을 다시 실행하세요. 기존 기록은 삭제되지 않고
+속도, 재화, 전생 직업, 이세계 직업 항목만 추가됩니다.
+
 ### 2단계: Supabase 키 확인
 
 Supabase 프로젝트에서 아래 값을 확인합니다.
@@ -64,6 +67,13 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 
 추가 후 반드시 다시 배포합니다.
 
+`SUPABASE_URL`에는 `/rest/v1`, `/dashboard`, 프로젝트 설정 페이지 주소를 붙이지 않습니다.
+정확히 아래 모양이어야 합니다.
+
+```text
+https://프로젝트참조값.supabase.co
+```
+
 ### 5단계: 접속 확인
 
 배포된 Vercel 주소에서 설정 페이지를 엽니다.
@@ -72,6 +82,18 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 2. HP, 공격력, 보유 스킬을 정합니다.
 3. `저장`을 누릅니다.
 4. 새로고침 후 `저장된 플레이어` 목록에 이름이 보이면 성공입니다.
+
+연결 상태만 확인하려면 Vercel 주소 뒤에 `/api/health`를 붙여 엽니다.
+
+```text
+https://내-프로젝트.vercel.app/api/health
+```
+
+정상이면 아래처럼 표시됩니다.
+
+```json
+{"ok":true,"message":"Vercel and Supabase are connected."}
+```
 
 ## 로컬 Node 서버 저장 방식
 
