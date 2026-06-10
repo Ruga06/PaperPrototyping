@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>보드게임 전투 도우미</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <nav class="board-switcher" aria-label="보드판 전환">
+      <span class="board-switcher-label">BOARD</span>
+      <button class="board-mode-button active" id="normalBoardButton" type="button" aria-pressed="true"><strong>일반</strong><small>1 MAP</small></button>
+      <button class="board-mode-button demon" id="demonBoardButton" type="button" aria-pressed="false"><strong>마왕</strong><small>2 MAP</small></button>
+    </nav>
+    <main class="app-shell">
+      <section class="status-band" aria-label="전투 상태">
+        <div class="title-block"><p class="eyebrow">Battle Helper</p><h1>전투 도우미</h1><p class="board-mode-status" id="boardModeStatus">일반 보드판 규칙</p><div class="phase-steps" aria-label="진행 단계"><span id="phaseSetup" class="active">설정</span><span id="phaseCombat">전투</span><span id="phaseReward">보상</span></div></div>
+        <div class="combatants">
+          <article class="combatant player"><div><span class="label">플레이어</span><strong id="playerHpLabel">30 / 30</strong></div><div class="meter" aria-label="플레이어 HP"><span id="playerHpBar"></span></div><p id="playerStatLabel">공격력 4</p></article>
+          <div class="versus" aria-hidden="true">VS</div>
+          <article class="combatant enemy"><div><span class="label" id="enemyNameLabel">몬스터</span><strong id="enemyHpLabel">20 / 20</strong></div><div class="meter" aria-label="몬스터 HP"><span id="enemyHpBar"></span></div><p id="enemyAttackLabel">공격 성공 시 10 대미지</p></article>
+        </div>
+      </section>
+      <section class="page-host">
+        <section class="page setup-page" id="setupPage" aria-label="설정 페이지">
+          <form class="panel setup-panel" id="setupForm">
+            <div class="panel-heading"><div><p class="panel-kicker">1. 설정</p><h2>능력치와 전투 대상</h2></div><button type="button" class="icon-button" id="resetButton" aria-label="초기화" title="초기화">↻</button></div>
+            <div class="player-storage">
+              <label>플레이어 이름<input id="playerName" type="text" maxlength="24" placeholder="이름 입력" /></label>
+              <label>저장된 플레이어<select id="playerSelect"></select></label>
+              <div class="button-row"><button class="secondary-button" id="loadPlayerButton" type="button">불러오기</button><button class="secondary-button" id="savePlayerButton" type="button">저장</button></div>
+              <p class="storage-status" id="storageStatus">서버로 실행하면 플레이어 정보를 저장할 수 있습니다.</p>
+            </div>
+            <div class="field-grid">
+              <label>전생 직업 프리셋<select id="prevJobSelect"></select></label><label>이세계 직업<select id="isekaiJobSelect"></select></label>
+              <label>최대 HP<input id="playerMaxHp" type="number" min="1" value="30" /></label><label>현재 HP<input id="playerCurrentHp" type="number" min="0" value="30" /></label>
+              <label>공격력<input id="playerAttack" type="number" min="0" value="4" /></label><label>이동속도<input id="playerSpeed" type="number" min="0" value="3" /></label>
+              <label>보유 재화<input id="playerCoins" type="number" min="0" value="0" /></label><label>전투할 몬스터<select id="monsterSelect"></select></label>
+            </div>
+            <div class="selected-card" id="jobPreview"></div><div class="selected-card" id="monsterPreview"></div><div class="board-rule-notice" id="boardRuleNotice"></div>
+            <div class="panel-subheading"><h3>이번 전투 준비 효과</h3><span>아이템·타일·방해 카드</span></div>
+            <div class="modifier-grid">
+              <label>소비 아이템<select id="combatItemSelect"><option value="">사용 안 함</option><option value="flower">꽃다발 · 적 공격 2회 무효</option><option value="beer">맥주 · 이번 전투 공격력 +6</option><option value="attackPotion">공격력의 비약 · 이번 전투 공격력 +5</option></select></label>
+              <label>선점 타일 효과<select id="claimEffectSelect"><option value="">없음</option><option value="destruction">파괴의 조각상 · 공격력 +5</option><option value="giant">거대화 물약 · 최대 HP +10</option><option value="fountain">회복의 분수 · 전투 시작 HP +10</option><option value="unlucky">불운의 주사위 · 주사위 -1</option><option value="shadow">그림자의 문 · 최대 HP -10</option><option value="plague">역병의 항아리 · 총 피해 -5</option><option value="fear">공포의 가면 · 적 공격 확률 100%</option></select></label>
+              <label>피격 보정<select id="incomingEffectSelect"><option value="normal">일반 · 코인 앞면에 1배 피해</option><option value="double">마왕의 꼬드김 · 피해 2배</option><option value="half">평화주의자 마족 · 피해 50%</option><option value="none">무피해 전투 · 피해 없음</option><option value="block1">대리 피격/무효화권 · 1회 무효</option></select></label>
+              <label>일시 공격력 감소<select id="attackPenaltySelect"><option value="0">없음</option><option value="3">유산소 운동 · -3</option><option value="4">돌아가는 꿈 · -4</option><option value="5">유산소 운동 · -5</option></select></label>
+              <label class="demon-stage-field" id="demonStageField" hidden>마왕 타일 단계<select id="demonStageSelect"><option value="1">1단계 · 가하는 대미지 1배</option><option value="1.4">2단계 · 가하는 대미지 1.4배</option><option value="1.8">3단계 · 가하는 대미지 1.8배</option></select></label>
+            </div>
+            <div class="panel-subheading"><h3>보유한 스킬 카드</h3><span id="skillCountLabel">0장 선택</span></div><div class="skill-grid" id="skillChecklist"></div>
+            <button class="primary-button wide" type="submit">전투 시작</button>
+          </form>
+        </section>
+        <section class="page combat-page" id="combatPage" aria-label="전투 페이지">
+          <section class="panel action-panel" aria-label="플레이어 턴"><div class="panel-heading"><div><p class="panel-kicker">2. 전투</p><h2>플레이어 턴</h2></div><span class="round-pill" id="roundLabel">1 라운드</span></div><label>이번 턴에 사용할 공격<select id="actionSelect"></select></label><div class="dice-stage"><div class="dice" id="diceFace" aria-label="주사위 결과">?</div><div class="formula"><span>굴림 효과</span><strong id="rollEffect">-</strong><span>+</span><span>공격력</span><strong id="attackPreview">4</strong><span>=</span><strong id="damagePreview">-</strong></div></div><div class="selected-card" id="actionPreview">설정에서 전투를 시작하세요.</div><div class="active-effects" id="activeEffects"></div><button class="primary-button wide" id="playerTurnButton" type="button">공격 실행</button></section>
+          <section class="panel enemy-panel" aria-label="몬스터 턴"><div class="panel-heading"><div><p class="panel-kicker">몬스터 반격</p><h2>몬스터 턴</h2></div><span class="round-pill muted" id="coinResult">대기</span></div><div class="coin-stage"><button class="coin" id="enemyTurnButton" type="button" aria-label="코인토스 실행"><span id="coinFace">?</span></button><div class="enemy-rule"><p>앞면이면 몬스터가 공격합니다.</p><p>뒷면이면 공격하지 않습니다.</p></div></div><div class="last-event" id="lastEvent">설정을 마치고 전투를 시작하세요.</div></section>
+          <section class="panel log-panel" aria-label="전투 로그"><div class="panel-heading"><div><p class="panel-kicker">기록</p><h2>전투 로그</h2></div><button type="button" class="icon-button" id="clearLogButton" aria-label="로그 지우기" title="로그 지우기">×</button></div><ol id="battleLog" class="battle-log"></ol></section>
+        </section>
+        <section class="page reward-page" id="rewardPage" aria-label="보상 페이지"><section class="panel reward-panel"><p class="panel-kicker" id="resultPhase">3. 보상</p><h2 id="resultTitle">전투 보상</h2><p id="resultText">전투가 끝나면 획득할 보상이 여기에 표시됩니다.</p><ul class="reward-list" id="rewardList"></ul><button class="primary-button wide" id="closeDialogButton" type="button">설정으로 돌아가기</button></section></section>
+      </section>
+    </main>
+    <script src="script.js"></script>
+  </body>
+</html>
